@@ -7,7 +7,11 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
     const [customerName, setCustomerName] = useState('');
     const [customerContact, setCustomerContact] = useState('');
     const [customerEmail, setCustomerEmail] = useState('');
-    const [paymentMode, setPaymentMode] = useState('cash');
+    // New payment state
+    const [paymentMethod, setPaymentMethod] = useState('Cash'); // Top-level: Cash, Cheque, Online
+    const [onlinePaymentType, setOnlinePaymentType] = useState('UPI'); // Sub-level: UPI, Card, etc.
+    const [paymentId, setPaymentId] = useState('');
+    // ---
     const [amountPaid, setAmountPaid] = useState(0);
     const [totalPrice, setTotalPrice] = useState(0);
     const [balance, setBalance] = useState(0);
@@ -73,6 +77,11 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
             setMessage('Cannot create a booking with zero or negative price. Please check the times.');
             return;
         }
+
+        // Determine the final payment mode and ID to be sent
+        const finalPaymentMethod = paymentMethod === 'Online' ? onlinePaymentType : paymentMethod;
+        const finalPaymentId = paymentMethod === 'Online' ? paymentId : null;
+
         try {
             const res = await api.post('/bookings', {
                 court_id: courtId,
@@ -82,7 +91,10 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
                 date: selectedDate,
                 startTime: startTime,
                 endTime: endTime,
-                payment_mode: paymentMode,
+                // Updated payment details
+                payment_mode: finalPaymentMethod,
+                payment_id: finalPaymentId,
+                // ---
                 amount_paid: amountPaid,
                 slots_booked: slotsBooked
             });
@@ -92,7 +104,11 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
             setCustomerName('');
             setCustomerContact('');
             setCustomerEmail('');
-            setPaymentMode('cash');
+            // Reset payment fields
+            setPaymentMethod('Cash');
+            setOnlinePaymentType('UPI');
+            setPaymentId('');
+            // ---
             setAmountPaid(0);
             setTotalPrice(0);
             setBalance(0);
@@ -141,13 +157,34 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
                     <input type="number" value={totalPrice} readOnly style={{ backgroundColor: '#f0f0f0' }} />
                 </div>
 
+                {/* New Payment Section */}
                 <div>
-                    <label>Payment Mode</label>
-                    <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} required>
-                        <option value="cash">Cash</option>
-                        <option value="online">Online</option>
+                    <label>Payment Method</label>
+                    <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} required>
+                        <option value="Cash">Cash</option>
+                        <option value="Cheque">Cheque</option>
+                        <option value="Online">Online</option>
                     </select>
                 </div>
+
+                {paymentMethod === 'Online' && (
+                    <>
+                        <div>
+                            <label>Online Payment Type</label>
+                            <select value={onlinePaymentType} onChange={(e) => setOnlinePaymentType(e.target.value)} required>
+                                <option value="UPI">UPI</option>
+                                <option value="Card">Card</option>
+                                <option value="Internet Banking">Internet Banking</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Payment ID</label>
+                            <input type="text" value={paymentId} onChange={(e) => setPaymentId(e.target.value)} required />
+                        </div>
+                    </>
+                )}
+                {/* End of New Payment Section */}
+
                 <div>
                     <label>Amount Paid</label>
                     <input type="number" value={amountPaid} onChange={handleAmountPaidChange} required />
@@ -156,22 +193,24 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
                     <label>Balance</label>
                     <input type="number" value={balance} readOnly style={{ backgroundColor: '#f0f0f0' }} />
                 </div>
-                            <button type="submit">Create Booking</button>
-                        </form>
-                        {isConfirmationModalOpen && (
-                                        <ConfirmationModal 
-                                            booking={lastBooking}
-                                            onClose={() => {
-                                                console.log('Close button clicked');
-                                                setIsConfirmationModalOpen(false);
-                                            }}
-                                            onCreateNew={() => {
-                                                console.log('Create New Booking button clicked');
-                                                setIsConfirmationModalOpen(false);
-                                                // The form is already reset, so we just need to close the modal.
-                                            }}
-                                        />                        )}
-                    </>    );
+                <button type="submit">Create Booking</button>
+            </form>
+            {isConfirmationModalOpen && (
+                <ConfirmationModal 
+                    booking={lastBooking}
+                    onClose={() => {
+                        console.log('Close button clicked');
+                        setIsConfirmationModalOpen(false);
+                    }}
+                    onCreateNew={() => {
+                        console.log('Create New Booking button clicked');
+                        setIsConfirmationModalOpen(false);
+                        // The form is already reset, so we just need to close the modal.
+                    }}
+                />
+            )}
+        </>
+    );
 };
 
 export default BookingForm;

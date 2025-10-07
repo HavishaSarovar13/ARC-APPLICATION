@@ -6,25 +6,27 @@ const EditBookingModal = ({ booking, onSave, onClose, error }) => {
     const [extensionMinutes, setExtensionMinutes] = useState(0);
     const [availabilityMessage, setAvailabilityMessage] = useState('');
 
-    const checkAvailability = async () => {
-        if (formData.date && formData.startTime && formData.endTime) {
+    const checkClash = async () => {
+        if (formData.date && formData.startTime && formData.endTime && formData.court_id) {
             try {
-                const res = await api.get('/courts/availability', {
-                    params: {
-                        date: new Date(formData.date).toISOString().slice(0, 10),
-                        startTime: formData.startTime,
-                        endTime: formData.endTime
-                    }
+                const response = await api.post('/bookings/check-clash', {
+                    court_id: formData.court_id,
+                    date: new Date(formData.date).toISOString().slice(0, 10),
+                    startTime: formData.startTime,
+                    endTime: formData.endTime,
+                    bookingId: formData.id
                 });
-                const courtAvailability = res.data.find(c => c.id === formData.court_id);
-                if (courtAvailability && !courtAvailability.is_available) {
-                    setAvailabilityMessage('This slot is not available.');
+                if (response.data.is_clashing) {
+                    setAvailabilityMessage(response.data.message);
                 } else {
-                    setAvailabilityMessage('This slot is available.');
+                    setAvailabilityMessage(response.data.message);
                 }
             } catch (error) {
-                console.error("Error checking availability:", error);
-                setAvailabilityMessage('Could not check availability.');
+                if (error.response && error.response.data && error.response.data.message) {
+                    setAvailabilityMessage(error.response.data.message);
+                } else {
+                    setAvailabilityMessage('Could not check availability.');
+                }
             }
         }
     };
@@ -69,7 +71,13 @@ const EditBookingModal = ({ booking, onSave, onClose, error }) => {
     }, [booking]);
 
     useEffect(() => {
-        checkAvailability();
+        const handler = setTimeout(() => {
+            checkClash();
+        }, 500); // Debounce to avoid excessive API calls
+
+        return () => {
+            clearTimeout(handler);
+        };
     }, [formData.date, formData.startTime, formData.endTime, formData.court_id]);
 
     const handleExtensionChange = (e) => {

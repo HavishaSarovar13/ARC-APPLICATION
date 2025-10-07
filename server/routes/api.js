@@ -216,7 +216,8 @@ router.get('/bookings/all', authenticateToken, async (req, res) => {
                 s.name as sport_name,
                 b.total_price as total_amount,
                 u.username as created_by_user,
-                DATE_FORMAT(b.date, '%Y-%m-%d') as date
+                DATE_FORMAT(b.date, '%Y-%m-%d') as date,
+                b.is_rescheduled
             FROM bookings b 
             JOIN courts c ON b.court_id = c.id
             JOIN sports s ON b.sport_id = s.id
@@ -511,7 +512,11 @@ router.post('/bookings/calculate-price', authenticateToken, async (req, res) => 
 
 // Add a new booking
 router.post('/bookings', authenticateToken, async (req, res) => {
-    const { court_id, customer_name, customer_contact, customer_email, date, startTime, endTime, payment_mode, amount_paid, slots_booked } = req.body;
+    const { court_id, customer_name, customer_contact, customer_email, date, startTime,             endTime,
+            payment_mode,
+            payment_id, // Added payment_id
+            amount_paid,
+            slots_booked } = req.body;
     const created_by_user_id = req.user.id; // Get user ID from JWT
 
     try {
@@ -604,10 +609,10 @@ router.post('/bookings', authenticateToken, async (req, res) => {
         };
 
         const time_slot = `${formatTo12Hour(startTime)} - ${formatTo12Hour(endTime)}`;
-        const sql = 'INSERT INTO bookings (court_id, sport_id, created_by_user_id, customer_name, customer_contact, customer_email, date, time_slot, payment_mode, amount_paid, total_price, balance_amount, payment_status, slots_booked) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        const values = [court_id, sport_id, created_by_user_id, customer_name, customer_contact, customer_email, date, time_slot, payment_mode, amount_paid, total_price, balance_amount, payment_status, slots_booked];
-
-        const [result] = await db.query(sql, values);
+        const [result] = await db.query(
+            'INSERT INTO bookings (court_id, sport_id, created_by_user_id, customer_name, customer_contact, customer_email, date, time_slot, total_price, amount_paid, balance_amount, payment_status, payment_mode, payment_id, slots_booked, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [court_id, sport_id, created_by_user_id, customer_name, customer_contact, customer_email, date, time_slot, total_price, amount_paid, balance_amount, payment_status, payment_mode, payment_id, slots_booked, 'Booked']
+        );
         res.json({ success: true, bookingId: result.insertId });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -709,9 +714,11 @@ router.put('/bookings/:id', authenticateToken, async (req, res) => {
         const balance_amount = total_price - amount_paid;
 
         // 4. Update the booking
+        const is_rescheduled = newTimeSlot !== existingBooking.time_slot || dateForConflictCheck !== existingBooking.date;
+
         const sql = `
             UPDATE bookings 
-            SET customer_name = ?, customer_contact = ?, customer_email = ?, date = ?, time_slot = ?, total_price = ?, amount_paid = ?, balance_amount = ?, payment_mode = ?, payment_status = ?, status = ?
+            SET customer_name = ?, customer_contact = ?, customer_email = ?, date = ?, time_slot = ?, total_price = ?, amount_paid = ?, balance_amount = ?, payment_mode = ?, payment_status = ?, status = ?, is_rescheduled = ?
             WHERE id = ?
         `;
         const values = [
@@ -726,6 +733,7 @@ router.put('/bookings/:id', authenticateToken, async (req, res) => {
             payment_mode,
             payment_status,
             status,
+            is_rescheduled,
             id
         ];
 
@@ -1172,6 +1180,67 @@ Thank you for booking with ARC SportsZone!
 
     res.writeHead(200, { 'Content-Type': 'text/xml' });
     res.end(twiml.toString());
+});
+
+// Check for booking conflicts in real-time
+router.post('/bookings/check-clash', authenticateToken, async (req, res) => {
+    const { court_id, date, startTime, endTime, bookingId } = req.body;
+
+    if (!court_id || !date || !startTime || !endTime) {
+        return res.status(400).json({ message: 'court_id, date, startTime, and endTime are required.' });
+    }
+
+    try {
+        const query = 'SELECT * FROM bookings WHERE court_id = ? AND date = ? AND status != ?' + (bookingId ? ' AND id != ?' : '');
+        const params = [court_id, date, 'Cancelled'];
+        if (bookingId) {
+            params.push(bookingId);
+        }
+
+        const [conflictingBookings] = await db.query(query, params);
+
+        const toMinutes = (timeStr) => {
+            const [time, modifier] = timeStr.split(' ');
+            let [hours, minutes] = time.split(':').map(Number);
+            if (modifier === 'PM' && hours < 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+            return hours * 60 + minutes;
+        };
+
+        const checkOverlap = (startA, endA, startB, endB) => {
+            const startAMin = toMinutes(startA);
+            const endAMin = toMinutes(endA);
+            const startBMin = toMinutes(startB);
+            const endBMin = toMinutes(endB);
+            return startAMin < endBMin && endAMin > startBMin;
+        };
+
+        const formatTo12Hour = (time) => {
+            let [hours, minutes] = time.split(':').map(Number);
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            return `${hours}:${minutes} ${ampm}`;
+        };
+
+        const newTimeSlot = `${formatTo12Hour(startTime)} - ${formatTo12Hour(endTime)}`;
+        const [newStart, newEnd] = newTimeSlot.split(' - ');
+
+        const isOverlapping = conflictingBookings.some(booking => {
+            const [existingStart, existingEnd] = booking.time_slot.split(' - ');
+            return checkOverlap(newStart.trim(), newEnd.trim(), existingStart.trim(), existingEnd.trim());
+        });
+
+        if (isOverlapping) {
+            return res.status(200).json({ is_clashing: true, message: 'The selected time slot conflicts with another booking.' });
+        } else {
+            return res.status(200).json({ is_clashing: false, message: 'The selected time slot is available.' });
+        }
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 module.exports = router;

@@ -11,6 +11,7 @@ const Ledger = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
+    const [isPaymentIdVisible, setIsPaymentIdVisible] = useState(false); // State for collapsible column
 
     const fetchFilteredBookings = useCallback(async () => {
         const { date, sport, customer } = filters;
@@ -96,12 +97,16 @@ const Ledger = () => {
     return (
         <div>
             <h2>Booking Ledger</h2>
-            <div style={{ marginBottom: '10px' }}>
+            {/* Improved Filter Controls */}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '20px' }}>
                 <input type="date" name="date" value={filters.date} onChange={handleFilterChange} />
-                <input type="text" name="sport" placeholder="Filter by sport" value={filters.sport} onChange={handleFilterChange} style={{ marginLeft: '10px' }} />
-                <input type="text" name="customer" placeholder="Filter by customer" value={filters.customer} onChange={handleFilterChange} style={{ marginLeft: '10px' }} />
-                <button onClick={toggleSortOrder} style={{ marginLeft: '10px' }}>
+                <input type="text" name="sport" placeholder="Filter by sport" value={filters.sport} onChange={handleFilterChange} />
+                <input type="text" name="customer" placeholder="Filter by customer" value={filters.customer} onChange={handleFilterChange} />
+                <button onClick={toggleSortOrder}>
                     Sort: {sortOrder === 'desc' ? 'Newest First' : 'Oldest First'}
+                </button>
+                <button onClick={() => setIsPaymentIdVisible(!isPaymentIdVisible)}>
+                    {isPaymentIdVisible ? 'Hide' : 'Show'} Payment ID
                 </button>
             </div>
             <BookingList 
@@ -109,6 +114,7 @@ const Ledger = () => {
                 onEdit={handleEditClick} 
                 onCancel={handleCancelClick} 
                 onReceipt={handleReceiptClick}
+                isPaymentIdVisible={isPaymentIdVisible} // Pass visibility state
             />
             {isEditModalOpen && (
                 <EditBookingModal 
