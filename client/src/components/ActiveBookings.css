@@ -1,124 +1,213 @@
+:root {
+    /* Main Theme Colors */
+    --color-peacock-blue: hsl(253, 82%, 50%);
+    --color-peacock-dark: #530ede;
+    --color-red-primary: #CC2936;
+    --color-red-light: hsl(243, 82%, 44%);
+    
+    /* Backgrounds & Surfaces */
+    --color-container-background: #ffffff;
+    
+    /* Status Colors mapped to theme */
+    --status-active: var(--color-peacock-blue);
+    --status-upcoming: #5b34db; /* Standard blue for visual separation from Peacock */
+    --status-ended: var(--color-red-primary);
+    
+    /* Typography & Effects */
+    --color-text-dark: #343a40;
+    --color-text-muted: #6c757d;
+    --shadow-subtle: 0 5px 15px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.15);
+    --border-radius-card: 12px;
+    --transition-speed: 0.3s;
+}
+
+/* --- Container and Layout --- */
+
 .active-bookings-container {
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 30px; /* Increased padding */
+    margin-bottom: 30px;
+    background-color: var(--color-container-background);
+    border-radius: var(--border-radius-card);
+    box-shadow: var(--shadow-subtle); /* Stronger shadow */
+    border: 1px solid #eee;
 }
 
 .upcoming-container {
-    margin-top: 20px;
+    margin-top: 30px; /* Increased spacing */
+    background-color: #f7f9fa; /* Subtle color difference for Upcoming section */
 }
 
 .active-bookings-container h4 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--color-peacock-dark);
+    border-bottom: 3px solid var(--color-peacock-blue); /* Peacock border */
+    padding-bottom: 12px;
     margin-top: 0;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
+    margin-bottom: 25px;
 }
 
 .active-bookings-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
+    display: grid;
+    /* Responsive Grid: Cards adjust size automatically */
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
 }
 
+/* --- Booking Card (The Core Design) --- */
+
 .active-booking-card {
-    background-color: #fff;
-    border-left: 5px solid #ccc; /* Default border */
-    padding: 10px 15px;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    width: 280px;
-    cursor: pointer; /* Make cards look clickable */
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background-color: var(--color-container-background);
+    border-radius: var(--border-radius-card);
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    /* Smooth Transitions for Hover Effects */
+    transition: transform var(--transition-speed) ease-in-out, box-shadow var(--transition-speed) ease-in-out;
+    box-shadow: var(--shadow-subtle);
+    border-left: 6px solid #ccc; /* Default border */
+    width: auto; /* Remove fixed width for grid layout */
 }
 
 .active-booking-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-8px); /* Pronounced lift effect */
+    box-shadow: var(--shadow-hover);
 }
 
+/* Status-Specific Styling */
+
 .active-booking-card.upcoming {
-    border-left-color: #17a2b8; /* Blue for upcoming */
+    border-left-color: var(--status-upcoming);
 }
 
 .active-booking-card.active {
-    border-left-color: #28a745; /* Green for active */
+    border-left-color: var(--status-active);
     animation: pulse 2s infinite;
 }
 
 .active-booking-card.ended {
-    border-left-color: #dc3545; /* Red for ended */
+    border-left-color: var(--status-ended);
+    background-color: var(--color-red-light); /* Light red background for attention */
 }
+
+/* Card Content Styling */
 
 .booking-info {
     display: flex;
     justify-content: space-between;
-    font-weight: bold;
-    margin-bottom: 8px;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--color-red-light);
+    font-weight: normal; /* Resetting bold from old CSS */
 }
 
 .sport-name {
-    color: #333;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--color-text-dark);
 }
 
 .court-name {
-    color: #666;
-    font-size: 0.9em;
+    font-size: 1rem;
+    font-weight: 600;
+    color: white;
+    background-color: var(--color-peacock-blue); /* Peacock Blue Pill */
+    padding: 5px 10px;
+    border-radius: 50px;
+    text-transform: uppercase;
 }
 
 .booking-date {
-    font-size: 0.9em;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 4px;
-    text-align: center;
+    font-size: 0.95em;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    margin-bottom: 5px;
+    text-align: left; /* Aligning text left for cleaner look */
 }
 
 .booking-time {
-    font-size: 1.1em;
-    color: #0056b3;
-    margin-bottom: 8px;
-    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-peacock-dark);
+    margin-bottom: 10px;
+    text-align: left;
 }
 
 .customer-name {
-    font-size: 0.95em;
-    color: #555;
-    text-align: center;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text-dark);
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--color-red-light);
+    text-align: left;
 }
 
+/* --- Action Area (Buttons and Messages) --- */
+
 .ended-message {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #eee;
-    text-align: center;
-    font-size: 0.9em;
-    color: #c00;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #ffe6e8;
+    border: 1px solid var(--color-red-primary);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: var(--color-red-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
 }
 
 .clear-btn {
-    margin-left: 10px;
-    padding: 3px 8px;
-    border: 1px solid #ccc;
-    background-color: #f0f0f0;
+    margin-top: 10px;
+    margin-left: 0; /* Remove old margin */
+    padding: 10px 20px;
+    border: 1px solid var(--color-red-primary);
+    border-radius: 5px;
+    font-weight: 700;
     cursor: pointer;
-    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all var(--transition-speed);
+    background-color: var(--color-red-light);
+    color: var(--color-red-primary);
+}
+
+.clear-btn:hover {
+    background-color: var(--color-red-primary);
+    color: white;
+    box-shadow: 0 4px 8px rgba(204, 41, 54, 0.4);
 }
 
 .mark-completed-btn {
-    background-color: #28a745; /* Green */
+    /* Primary action uses Peacock Blue */
+    background-color: var(--color-peacock-blue); 
     color: white;
-    border-color: #28a745;
+    border-color: var(--color-peacock-blue);
+    box-shadow: 0 4px 8px rgba(0, 163, 170, 0.4);
 }
+
+.mark-completed-btn:hover {
+    background-color: var(--color-peacock-dark);
+    box-shadow: 0 6px 12px rgba(0, 163, 170, 0.6);
+    transform: translateY(-2px);
+}
+
+/* --- Keyframes (Updated to use Peacock Blue) --- */
 
 @keyframes pulse {
     0% {
-        box-shadow: 0 1px 3px rgba(40, 167, 69, 0.2);
+        box-shadow: 0 1px 3px rgba(0, 163, 170, 0.2); /* Peacock Blue Pulse */
     }
     50% {
-        box-shadow: 0 1px 15px rgba(40, 167, 69, 0.5);
+        box-shadow: 0 1px 15px rgba(0, 163, 170, 0.5);
     }
     100% {
-        box-shadow: 0 1px 3px rgba(40, 167, 69, 0.2);
+        box-shadow: 0 1px 3px rgba(0, 163, 170, 0.2);
     }
 }

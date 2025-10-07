@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import './AvailabilityHeatmap.css';
 const AvailabilityHeatmap = ({ heatmapData, onSlotSelect }) => {
     const [tooltip, setTooltip] = useState({ visible: false, content: null, x: 0, y: 0 });
 
