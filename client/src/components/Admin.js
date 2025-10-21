@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api'; // Import the api instance
 import { useNavigate } from 'react-router-dom';
+import CourtStatusControl from './CourtStatusControl';
 
 const Admin = () => {
     const [sports, setSports] = useState([]);
@@ -17,10 +18,22 @@ const Admin = () => {
     const [newPassword, setNewPassword] = useState('');
     const [newRole, setNewRole] = useState('staff');
 
+    // State for accessories
+    const [accessories, setAccessories] = useState([]);
+    const [newAccessoryName, setNewAccessoryName] = useState('');
+    const [newAccessoryPrice, setNewAccessoryPrice] = useState('');
+
     useEffect(() => {
         fetchSports();
         fetchCourts();
+        fetchAccessories();
     }, []);
+
+    const fetchAccessories = async () => {
+        const res = await api.get('/accessories');
+        setAccessories(res.data);
+    };
+
 
     const fetchSports = async () => {
         const res = await api.get('/sports');
@@ -100,6 +113,48 @@ const Admin = () => {
         }
     };
 
+    const handleAddAccessory = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post('/accessories', { name: newAccessoryName, price: newAccessoryPrice });
+            setNewAccessoryName('');
+            setNewAccessoryPrice('');
+            fetchAccessories();
+            setMessage('Accessory added successfully!');
+        } catch (err) {
+            setMessage(err.response?.data?.message || 'Error adding accessory');
+        }
+    };
+
+    const handleAccessoryPriceChange = (e, accessoryId) => {
+        const updatedAccessories = accessories.map(acc =>
+            acc.id === accessoryId ? { ...acc, price: e.target.value } : acc
+        );
+        setAccessories(updatedAccessories);
+    };
+
+    const handleUpdateAccessory = async (accessoryId) => {
+        const accessoryToUpdate = accessories.find(a => a.id === accessoryId);
+        try {
+            await api.put(`/accessories/${accessoryId}`, { name: accessoryToUpdate.name, price: accessoryToUpdate.price });
+            setMessage(`Price for ${accessoryToUpdate.name} updated successfully!`);
+        } catch (err) {
+            setMessage(err.response?.data?.message || 'Error updating accessory price');
+        }
+    };
+
+    const handleDeleteAccessory = async (accessoryId) => {
+        if (window.confirm('Are you sure you want to delete this accessory?')) {
+            try {
+                await api.delete(`/accessories/${accessoryId}`);
+                fetchAccessories();
+                setMessage('Accessory deleted successfully!');
+            } catch (err) {
+                setMessage(err.response ? err.response.data.message : err.message || 'Error deleting accessory');
+            }
+        }
+    };
+
     const handleAddUser = async (e) => {
         e.preventDefault();
         try {
@@ -111,6 +166,14 @@ const Admin = () => {
         } catch (err) {
             setMessage(err.response?.data?.message || 'Error adding user');
         }
+    };
+
+    const handleCourtStatusChange = (courtId, newStatus) => {
+        const updatedCourts = courts.map(court =>
+            court.id === courtId ? { ...court, status: newStatus } : court
+        );
+        setCourts(updatedCourts);
+        setMessage(`Court status updated to ${newStatus}`)
     };
 
     return (
@@ -182,6 +245,47 @@ const Admin = () => {
                 </div>
             </div>
 
+            <div style={{ display: 'flex', gap: '40px', marginBottom: '40px' }}>
+                <div style={{ flex: 1 }}>
+                    <h3>Add a New Accessory</h3>
+                    <form onSubmit={handleAddAccessory}>
+                        <div>
+                            <label>Accessory Name</label>
+                            <input type="text" value={newAccessoryName} onChange={(e) => setNewAccessoryName(e.target.value)} required />
+                        </div>
+                        <div>
+                            <label>Price</label>
+                            <input type="number" value={newAccessoryPrice} onChange={(e) => setNewAccessoryPrice(e.target.value)} required />
+                        </div>
+                        <button type="submit">Add Accessory</button>
+                    </form>
+                </div>
+                <div style={{ flex: 1 }}>
+                    <h3>Manage Accessories</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Accessory</th>
+                                <th>Price</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {accessories.map(acc => (
+                                <tr key={acc.id}>
+                                    <td>{acc.name}</td>
+                                    <td><input type="number" value={acc.price} onChange={(e) => handleAccessoryPriceChange(e, acc.id)} /></td>
+                                    <td>
+                                        <button onClick={() => handleUpdateAccessory(acc.id)}>Update Price</button>
+                                        <button onClick={() => handleDeleteAccessory(acc.id)}>Delete</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div style={{ display: 'flex', gap: '40px' }}>
                 <div style={{ flex: 1 }}>
                     <h3>Manage Sports</h3>
@@ -214,6 +318,7 @@ const Admin = () => {
                             <tr>
                                 <th>Court</th>
                                 <th>Sport</th>
+                                <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -222,6 +327,9 @@ const Admin = () => {
                                 <tr key={court.id}>
                                     <td>{court.name}</td>
                                     <td>{court.sport_name}</td>
+                                    <td>
+                                        <CourtStatusControl court={court} onStatusChange={handleCourtStatusChange} />
+                                    </td>
                                     <td>
                                         <button onClick={() => handleDeleteCourt(court.id)}>Delete</button>
                                     </td>
