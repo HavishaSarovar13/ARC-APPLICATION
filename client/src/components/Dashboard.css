@@ -273,3 +273,68 @@
     color: #dc3545; /* Red on hover */
     text-decoration: underline;
 }
+/* --- MOBILE VIEW FIXES --- */
+@media screen and (max-width: 768px) {
+    
+    /* 1. Fix the main layout */
+    .dashboard-container {
+        padding: 10px !important;
+        width: 100% !important;
+        overflow-x: hidden !important; 
+        box-sizing: border-box;
+    }
+
+    /* 2. Force the side-by-side grid to 1 column */
+    .dashboard-main-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px !important;
+    }
+
+    /* 3. Stack all inputs */
+    .availability-form, 
+    .booking-form-container form {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+    }
+
+    .form-group, .form-group input, .form-group select {
+        width: 100% !important;
+    }
+
+    /* 4. Fix Table Scroll (Horizontal AND Vertical) */
+    .court-status-table-container, 
+    .active-bookings-wrapper,
+    .booking-list-container {
+        width: 100% !important;
+        /* SCROLL FIXES BELOW */
+        max-height: 400px !important; /* Limits height so it scrolls up/down */
+        overflow-y: auto !important;   /* Enables vertical scroll */
+        overflow-x: auto !important;   /* Keeps horizontal swipe */
+        display: block !important;
+        -webkit-overflow-scrolling: touch;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .dashboard-table {
+        min-width: 600px !important; 
+    }
+
+    /* 5. Headings */
+    .dashboard-header {
+        font-size: 1.5rem !important;
+        text-align: left;
+        margin-bottom: 15px;
+    }
+
+    /* 6. Ensure the Card allows its children to scroll */
+    .dashboard-card.court-status-card {
+        height: auto !important;
+        max-height: 600px !important; /* Total card limit */
+        display: flex;
+        flex-direction: column;
+    }
+}

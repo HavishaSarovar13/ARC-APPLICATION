@@ -20,3 +20,58 @@
     margin-bottom: 10px;
     width: 100%;
 }
+/* --- ADD THIS TO YOUR MOBILE VIEW --- */
+@media screen and (max-width: 768px) {
+    
+    /* 1. LOCK THE CONTAINER WIDTH */
+    .ledger-container {
+        width: 100% !important;
+        max-width: 100vw !important; /* Force it to stay within phone width */
+        overflow-x: hidden !important; /* This is the kill-switch for the right-side gap */
+        box-sizing: border-box !important;
+        padding: 10px !important;
+        margin: 0 auto !important;
+    }
+
+    /* 2. PREVENT TABS FROM PUSHING THE PAGE RIGHT */
+    .tabs-container {
+        display: flex !important;
+        width: 100% !important; /* Keep the bar within the card */
+        overflow-x: auto !important; /* Allow internal swiping */
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch;
+        gap: 10px !important;
+        padding-bottom: 5px !important;
+    }
+
+    /* 3. FIX CLUMSY/OVERFLOWING CONTROLS */
+    .controls-bar {
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important; /* Stack rows so they don't go wide */
+        gap: 10px !important;
+    }
+
+    .button-group {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important; /* Split buttons into 2 rows */
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    /* 4. LOCK THE SEARCH BAR */
+    .primary-search-bar, 
+    .primary-search-bar input {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 5. WRAP THE TABLE */
+    .table-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important; /* Scroll ONLY inside the table */
+        display: block !important;
+    }
+}
