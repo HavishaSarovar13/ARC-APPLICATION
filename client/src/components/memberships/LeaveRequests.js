@@ -36,46 +36,49 @@ const LeaveRequests = () => {
     return (
         <div className="leave-requests-container">
             <h3>Membership Leave Records</h3>
-            <table className="dashboard-table">
-                <thead>
-                    <tr>
-                        <th>Team ID</th>
-                        <th>Package</th>
-                        <th>Team</th>
-                        <th>Leave Period</th>
-                        <th>Days</th>
-                        <th>Reason</th>
-                        <th>Status</th>
+            <div className="table-scroll-wrapper">
+    <table className="dashboard-table">
+        <thead>
+            <tr>
+                <th>Team ID</th>
+                <th>Package</th>
+                <th>Team</th>
+                <th>Leave Period</th>
+                <th>Days</th>
+                <th>Reason</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {requests.length > 0 ? (
+                requests.map(req => (
+                    <tr key={req.id}>
+                        <td>{req.membership_id}</td>
+                        <td>{req.package_name}</td>
+                        <td className="team-cell">{req.team_members}</td>
+                        <td>
+                            {req.start_date && req.end_date
+                                ? `${new Date(req.start_date).toLocaleDateString()} - ${new Date(req.end_date).toLocaleDateString()}`
+                                : 'N/A'}
+                        </td>
+                        <td>{req.leave_days}</td>
+                        <td>{req.reason || '-'}</td>
+                        <td>
+                            <span className={`status-badge status-${req.status.toLowerCase()}`}>
+                                {req.status}
+                            </span>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {requests.length > 0 ? (
-                        requests.map(req => (
-                            <tr key={req.id}>
-                                <td>{req.membership_id}</td>
-                                <td>{req.package_name}</td>
-                                <td className="team-cell">{req.team_members}</td>
-                                <td>
-                                    {req.start_date && req.end_date ? 
-                                        `${new Date(req.start_date).toLocaleDateString()} - ${new Date(req.end_date).toLocaleDateString()}` : 
-                                        'N/A'}
-                                </td>
-                                <td>{req.leave_days}</td>
-                                <td>{req.reason || '-'}</td>
-                                <td>
-                                    <span className={`status-badge status-${req.status.toLowerCase()}`}>
-                                        {req.status}
-                                    </span>
-                                </td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan="7">No leave records found.</td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
+                ))
+            ) : (
+                <tr>
+                    <td colSpan="7">No leave records found.</td>
+                </tr>
+            )}
+        </tbody>
+    </table>
+</div>
+
         </div>
     );
 };

@@ -85,37 +85,49 @@ const PackageMgt = () => {
                 <h3>Membership Packages</h3>
                 <button className="btn btn-primary" onClick={() => handleOpenModal()}>Add New Package</button>
             </div>
-            <table className="dashboard-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Duration (Days)</th>
-                        <th>Per Person Price (Rs.)</th>
-                        <th>Max Team Size</th>
-                        <th>Actions</th>
+            <div className="table-scroll-wrapper">
+    <table className="dashboard-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Duration (Days)</th>
+                <th>Per Person Price (Rs.)</th>
+                <th>Max Team Size</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {packages.length > 0 ? (
+                packages.map(pkg => (
+                    <tr key={pkg.id}>
+                        <td>{pkg.name}</td>
+                        <td>{pkg.duration_days}</td>
+                        <td>{pkg.per_person_price}</td>
+                        <td>{pkg.max_team_size}</td>
+                        <td className="actions-cell">
+                            <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => handleOpenModal(pkg)}
+                            >
+                                Edit
+                            </button>
+                            <button
+                                className="btn btn-danger btn-sm"
+                                onClick={() => handleDelete(pkg.id)}
+                            >
+                                Delete
+                            </button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {packages.length > 0 ? (
-                        packages.map(pkg => (
-                            <tr key={pkg.id}>
-                                <td>{pkg.name}</td>
-                                <td>{pkg.duration_days}</td>
-                                <td>{pkg.per_person_price}</td>
-                                <td>{pkg.max_team_size}</td>
-                                <td className="actions-cell">
-                                    <button className="btn btn-secondary btn-sm" onClick={() => handleOpenModal(pkg)}>Edit</button>
-                                    <button className="btn btn-danger btn-sm" onClick={() => handleDelete(pkg.id)}>Delete</button>
-                                </td>
-                            </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan="5">No membership packages found.</td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
+                ))
+            ) : (
+                <tr>
+                    <td colSpan="5">No membership packages found.</td>
+                </tr>
+            )}
+        </tbody>
+    </table>
+</div>
 
             {isModalOpen && (
                 <PackageEditModal

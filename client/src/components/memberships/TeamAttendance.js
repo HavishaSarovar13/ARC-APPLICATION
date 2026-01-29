@@ -194,79 +194,92 @@ const TeamAttendance = () => {
             {loading && !selectedMembership && !isLeaveModalOpen && <p>Loading...</p>}
             {error && <p className="error-message">{error}</p>}
             
-            <table className="dashboard-table">
-                <thead>
-                    <tr>
-                        {visibleColumns.id && <th>ID</th>}
-                        {visibleColumns.package && <th>Package</th>}
-                        {visibleColumns.court && <th>Court</th>}
-                        {visibleColumns.team && <th>Team</th>}
-                        {visibleColumns.time_slot && <th>Time Slot</th>}
-                        {visibleColumns.status && <th>Status</th>}
-                        {visibleColumns.created_by && <th>Created By</th>}
-                        {visibleColumns.payment_info && <th>Payment Info</th>}
-                        {visibleColumns.discount_details && <th>Discount Reason</th>}
-                        {visibleColumns.action && <th>Action</th>}
-                    </tr>
-                </thead>
-                <tbody>
-                    {!loading && filteredMemberships.length > 0 ? (
-                        filteredMemberships.map(mem => (
-                            <tr key={mem.id}>
-                                {visibleColumns.id && <td>{mem.id}</td>}
-                                {visibleColumns.package && <td>{mem.package_name}</td>}
-                                {visibleColumns.court && <td>{mem.court_name}</td>}
-                                {visibleColumns.team && <td className="team-cell">{mem.team_members}</td>}
-                                {visibleColumns.time_slot && <td>{mem.time_slot}</td>}
-                                {visibleColumns.status && (
-                                    <td>
-                                        {onLeave.has(mem.id) ? (
-                                            <span className="status-badge status-leave">ON LEAVE</span>
-                                        ) : attended.has(mem.id) ? (
-                                            <span className="status-badge status-present">PRESENT</span>
-                                        ) : (
-                                            <button 
-                                                className="btn btn-success btn-sm"
-                                                onClick={() => handleMarkAttendance(mem.id)}
-                                            >
-                                                Mark Present
-                                            </button>
-                                        )}
-                                    </td>
+           <div className="table-scroll-wrapper">
+    <table className="dashboard-table">
+        <thead>
+            <tr>
+                {visibleColumns.id && <th>ID</th>}
+                {visibleColumns.package && <th>Package</th>}
+                {visibleColumns.court && <th>Court</th>}
+                {visibleColumns.team && <th>Team</th>}
+                {visibleColumns.time_slot && <th>Time Slot</th>}
+                {visibleColumns.status && <th>Status</th>}
+                {visibleColumns.created_by && <th>Created By</th>}
+                {visibleColumns.payment_info && <th>Payment Info</th>}
+                {visibleColumns.discount_details && <th>Discount Reason</th>}
+                {visibleColumns.action && <th>Action</th>}
+            </tr>
+        </thead>
+
+        <tbody>
+            {!loading && filteredMemberships.length > 0 ? (
+                filteredMemberships.map(mem => (
+                    <tr key={mem.id}>
+                        {visibleColumns.id && <td>{mem.id}</td>}
+                        {visibleColumns.package && <td>{mem.package_name}</td>}
+                        {visibleColumns.court && <td>{mem.court_name}</td>}
+                        {visibleColumns.team && <td className="team-cell">{mem.team_members}</td>}
+                        {visibleColumns.time_slot && <td>{mem.time_slot}</td>}
+                        {visibleColumns.status && (
+                            <td>
+                                {onLeave.has(mem.id) ? (
+                                    <span className="status-badge status-leave">ON LEAVE</span>
+                                ) : attended.has(mem.id) ? (
+                                    <span className="status-badge status-present">PRESENT</span>
+                                ) : (
+                                    <button
+                                        className="btn btn-success btn-sm"
+                                        onClick={() => handleMarkAttendance(mem.id)}
+                                    >
+                                        Mark Present
+                                    </button>
                                 )}
-                                {visibleColumns.created_by && <td>{mem.created_by || '-'}</td>}
-                                {visibleColumns.payment_info && <td className="small-text" title={mem.payment_info}>{mem.payment_info || '-'}</td>}
-                                {visibleColumns.discount_details && <td>{mem.discount_details || '-'}</td>}
-                                {visibleColumns.action && (
-                                    <td className="actions-cell">
-                                        <div className="actions-menu-container">
-                                            <button className="three-dots-btn" onClick={(e) => handleToggleMenu(mem.id, e)}>
-                                                &#8285;
+                            </td>
+                        )}
+                        {visibleColumns.created_by && <td>{mem.created_by || '-'}</td>}
+                        {visibleColumns.payment_info && (
+                            <td className="small-text" title={mem.payment_info}>
+                                {mem.payment_info || '-'}
+                            </td>
+                        )}
+                        {visibleColumns.discount_details && <td>{mem.discount_details || '-'}</td>}
+                        {visibleColumns.action && (
+                            <td className="actions-cell">
+                                <div className="actions-menu-container">
+                                    <button
+                                        className="three-dots-btn"
+                                        onClick={(e) => handleToggleMenu(mem.id, e)}
+                                    >
+                                        &#8285;
+                                    </button>
+                                    {openMenuId === mem.id && (
+                                        <div className="actions-dropdown">
+                                            <button onClick={() => handleViewCalendar(mem)}>
+                                                View Calendar
                                             </button>
-                                            {openMenuId === mem.id && (
-                                                <div className="actions-dropdown">
-                                                    <button onClick={() => handleViewCalendar(mem)}>
-                                                        View Calendar
-                                                    </button>
-                                                    <button onClick={() => handleOpenLeaveModal(mem)}>
-                                                        Mark Leave
-                                                    </button>
-                                                </div>
-                                            )}
+                                            <button onClick={() => handleOpenLeaveModal(mem)}>
+                                                Mark Leave
+                                            </button>
                                         </div>
-                                    </td>
-                                )}
-                            </tr>
-                        ))
-                    ) : (
-                        !loading && (
-                            <tr>
-                                <td colSpan={Object.values(visibleColumns).filter(Boolean).length}>No active memberships for the selected date.</td>
-                            </tr>
-                        )
-                    )}
-                </tbody>
-            </table>
+                                    )}
+                                </div>
+                            </td>
+                        )}
+                    </tr>
+                ))
+            ) : (
+                !loading && (
+                    <tr>
+                        <td colSpan={Object.values(visibleColumns).filter(Boolean).length}>
+                            No active memberships for the selected date.
+                        </td>
+                    </tr>
+                )
+            )}
+        </tbody>
+    </table>
+</div>
+
 
             {selectedMembership && (
                 <AttendanceCalendarModal 

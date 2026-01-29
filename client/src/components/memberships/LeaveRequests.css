@@ -41,3 +41,53 @@
 .btn-success:hover {
     background-color: #218838;
 }
+/* ===============================
+   LEAVE REQUESTS – MOBILE FIX
+================================ */
+
+.leave-requests-container {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Reuse same scroll wrapper */
+.table-scroll-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Force table to scroll, not overflow */
+.dashboard-table {
+    min-width: 900px; /* more columns than packages */
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    white-space: nowrap;
+}
+
+/* Team column can be long */
+.team-cell {
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ===============================
+   MOBILE TWEAKS
+================================ */
+@media (max-width: 768px) {
+
+    .leave-requests-container h3 {
+        font-size: 22px;
+        line-height: 1.2;
+    }
+
+    .dashboard-table {
+        font-size: 14px;
+    }
+}

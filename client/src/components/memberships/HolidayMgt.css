@@ -1,17 +1,24 @@
 .holiday-mgt-container {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 1fr 2fr; /* desktop */
     gap: 2rem;
     align-items: start;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
-.holiday-form-card, .holiday-list-card {
+/* Cards */
+.holiday-form-card,
+.holiday-list-card {
     background-color: #fff;
     padding: 1.5rem;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    width: 100%;
+    box-sizing: border-box;
 }
 
+/* Headings */
 .holiday-mgt-container h3 {
     font-size: 1.3rem;
     color: #333;
@@ -21,6 +28,7 @@
     padding-bottom: 0.75rem;
 }
 
+/* Form */
 .holiday-form .form-group {
     margin-bottom: 1rem;
 }
@@ -28,4 +36,29 @@
 .holiday-form .btn {
     width: 100%;
     margin-top: 0.5rem;
+}
+
+/* ---------- TABLE SAFETY ---------- */
+.holiday-list-card {
+    overflow-x: auto;   /* enables horizontal scroll instead of overflow */
+}
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;   /* prevents columns from squishing */
+}
+
+/* ---------- MOBILE FIX ---------- */
+@media (max-width: 768px) {
+    .holiday-mgt-container {
+        grid-template-columns: 1fr;  /* stack cards */
+        gap: 1.25rem;
+        padding: 1rem;
+    }
+
+    .holiday-form-card,
+    .holiday-list-card {
+        padding: 1rem;
+    }
 }
