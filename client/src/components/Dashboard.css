@@ -40,10 +40,12 @@
 /* --- Three-Column Grid Layout --- */
 .dashboard-main-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Three equal columns */
+    /* FIX: minmax(0, 1fr) ensures the 1st card cannot expand beyond its 1/3 share */
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important; 
     gap: 24px;
-    align-items: stretch; /* Aligns cards to the top */
-    margin-top: 24px; /* Space below heatmap */
+    align-items: stretch; 
+    margin-top: 24px; 
+    width: 100%;
 }
 
 /* Specific card types (can adjust spanning if needed later) */
@@ -56,7 +58,7 @@
 .daily-bookings-card {
     grid-column: 1 / -1; /* Daily bookings span all columns below the grid */
     margin-top: 24px; /* Add space above the daily bookings */
-    overflow: visible;
+    overflow: no;
     z-index: 5;
 }
 
@@ -175,8 +177,15 @@
 /* ... (previous styles) ... */
 
 .court-status-table-container {
-    overflow-y: auto;
+    overflow-y: auto !important;   /* Keeps vertical scroll */
+    overflow-x: hidden !important; /* REMOVES horizontal scrollbar */
     flex-grow: 1;
+    width: 100% !important;
+    max-height: 400px;             /* Ensures vertical scroll kicks in */
+    margin-top: 10px;
+    display: block !important;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
 }
 
 .booking-form-container {
@@ -311,7 +320,6 @@
         /* SCROLL FIXES BELOW */
         max-height: 400px !important; /* Limits height so it scrolls up/down */
         overflow-y: auto !important;   /* Enables vertical scroll */
-        overflow-x: auto !important;   /* Keeps horizontal swipe */
         display: block !important;
         -webkit-overflow-scrolling: touch;
         border: 1px solid #ddd;
@@ -328,6 +336,7 @@
         font-size: 1.5rem !important;
         text-align: left;
         margin-bottom: 15px;
+        
     }
 
     /* 6. Ensure the Card allows its children to scroll */
