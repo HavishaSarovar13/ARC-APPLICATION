@@ -202,6 +202,34 @@
 .modal-actions button:hover {
   background-color: #0056b3;
 }
+/* === BOOKING SUMMARY PART — CENTERED AS REQUESTED === */
+.booking-summary-info {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  gap: 8px !important;
+  margin-top: 15px !important;
+}
+
+.booking-summary-info p {
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-family: "Poppins", "Inter", "Segoe UI", sans-serif !important;
+  font-size: 0.94rem !important;      
+  color: #1f2937 !important;
+  white-space: nowrap;
+  font-weight: 700 !important;
+}
+
+.booking-summary-info strong {
+  font-weight: 700 !important;       
+  margin-right: 8px;
+  color: #374151 !important;
+}
 
 /* ===========================
    PRINT MODE - A4 SETTINGS

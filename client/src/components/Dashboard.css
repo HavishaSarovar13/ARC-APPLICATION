@@ -282,6 +282,70 @@
     color: #dc3545; /* Red on hover */
     text-decoration: underline;
 }
+/* 1. Fix the Time Slot Dropdown cutting off 'PM' */
+.availability-form .form-group select,
+.availability-form .form-group input {
+    padding: 8px 4px !important; /* <--- THIS IS THE MAIN FIX */
+    font-size: 13px !important;   /* <--- THIS IS THE SECONDARY FIX */
+    width: 100% !important;
+}
+/* --- Fix for Court Status Table --- */
+
+.court-status-table-container {
+    width: 100% !important;
+    margin-top: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    /* IMPORTANT: Changed from hidden to auto so you can see all columns */
+    overflow-x: auto !important; 
+    overflow-y: auto !important;
+    max-height: 400px;
+    background: #fff;
+    display: block !important;
+}
+
+.dashboard-table {
+    width: 100% !important;
+    border-collapse: collapse;
+    /* Forces the table to stay within the container width */
+    table-layout: fixed; 
+}
+
+/* Header Styling - Gray bar across the top */
+.dashboard-table thead th {
+    background-color: #f8f9fa;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    color: #6c757d;
+    text-transform: uppercase;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Row Styling */
+.dashboard-table td {
+    padding: 12px 12px;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+    vertical-align: middle;
+    /* Prevents long text from pushing columns away */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- COLUMN WIDTHS (The Secret Fix) --- */
+/* This ensures all 4 columns stay visible in the card */
+.dashboard-table th:nth-child(1), .dashboard-table td:nth-child(1) { width: 25%; } /* Court */
+.dashboard-table th:nth-child(2), .dashboard-table td:nth-child(2) { width: 20%; } /* Sport */
+.dashboard-table th:nth-child(3), .dashboard-table td:nth-child(3) { width: 30%; } /* Status */
+.dashboard-table th:nth-child(4), .dashboard-table td:nth-child(4) { width: 25%; } /* Actions */
+
+/* Row hover */
+.dashboard-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
 /* --- MOBILE VIEW FIXES --- */
 @media screen and (max-width: 768px) {
     
