@@ -5,7 +5,7 @@ import BookingList from './BookingList';
 import EditBookingModal from './EditBookingModal';
 import ReceiptModal from './ReceiptModal';
 import DeskAnalytics from './DeskAnalytics';
-import Pagination from './Pagination'; // Import the Pagination component
+import Pagination from './Pagination'; 
 import './Ledger.css';
 
 const Ledger = ({ user }) => {
@@ -23,7 +23,6 @@ const Ledger = ({ user }) => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const bookingsPerPage = 15;
@@ -46,6 +45,41 @@ const Ledger = ({ user }) => {
         bookedBy: 'Booked By',
     };
 
+    // --- GUARANTEED PENDING AMOUNT FIX ---
+const stats = useMemo(() => {
+    // This will print the data in your browser console so you can see the real names
+    if (bookings.length > 0) console.log("API DATA CHECK:", bookings[0]);
+
+    return bookings.reduce((acc, b) => {
+        // 1. Get Paid Amount
+        const paid = parseFloat(b.amountPaid || b.amount_paid || 0);
+        
+        // 2. Get Balance (Try to find it, otherwise calculate it)
+        // We look for 'balance', then 'pending', then we calculate it from 'total'
+        const total = parseFloat(b.totalAmount || b.total_price || b.total || 0);
+        const balanceField = parseFloat(b.balance || b.pending_amount || b.due_amount || 0);
+        
+        // If the balance field exists in DB, use it. 
+        // Otherwise, if we have a 'Total', subtract 'Paid' from it.
+        const actualBalance = balanceField > 0 ? balanceField : (total > paid ? total - paid : 0);
+
+        acc.totalRevenue += paid;
+        acc.totalPending += actualBalance;
+
+        // 3. Revenue by Mode (Already working)
+        let modeLabel = b.paymentMethod || b.payment_mode || b.mode;
+        if (paid > 0 && modeLabel) {
+            const cleanLabel = modeLabel.toString().trim();
+            const formattedLabel = cleanLabel.length <= 3 
+                ? cleanLabel.toUpperCase() 
+                : cleanLabel.charAt(0).toUpperCase() + cleanLabel.slice(1).toLowerCase();
+            acc.modes[formattedLabel] = (acc.modes[formattedLabel] || 0) + paid;
+        }
+
+        return acc;
+    }, { totalRevenue: 0, totalPending: 0, modes: {} });
+}, [bookings]);
+
     const fetchBookings = useCallback(async (page = 1) => {
         try {
             const params = {
@@ -54,12 +88,10 @@ const Ledger = ({ user }) => {
                 limit: bookingsPerPage,
                 status: activeTab
             };
-
             const res = await api.get('/bookings/all', { params });
-
-            setBookings(Array.isArray(res.data.bookings) ? res.data.bookings : []);
-            setTotalPages(res.data.totalPages || 0); // Always set total pages for pagination
-
+            const data = Array.isArray(res.data.bookings) ? res.data.bookings : [];
+            setBookings(data);
+            setTotalPages(res.data.totalPages || 0);
         } catch (error) {
             console.error("Error fetching bookings:", error);
             setBookings([]);
@@ -67,10 +99,8 @@ const Ledger = ({ user }) => {
         }
     }, [filters, activeTab, bookingsPerPage]);
 
-    // Effect for handling SSE and initial fetch
     useEffect(() => {
         fetchBookings(currentPage);
-
         const eventSource = new EventSource('http://localhost:5000/api/events');
         eventSource.onmessage = (event) => {
             const data = JSON.parse(event.data);
@@ -82,11 +112,9 @@ const Ledger = ({ user }) => {
             console.error('SSE Error:', error);
             eventSource.close();
         };
-
         return () => eventSource.close();
     }, [fetchBookings, currentPage]);
 
-    // Effect for handling deep-linking to edit a booking
     useEffect(() => {
         const { openBookingId } = location.state || {};
         if (openBookingId && bookings.length > 0) {
@@ -98,7 +126,6 @@ const Ledger = ({ user }) => {
         }
     }, [location.state, bookings, navigate, location.pathname]);
 
-    // Reset to page 1 when filters or tab change
     useEffect(() => {
         setCurrentPage(1);
     }, [filters, activeTab]);
@@ -118,7 +145,6 @@ const Ledger = ({ user }) => {
     };
 
     const filteredAndSortedBookings = useMemo(() => {
-        // The backend now handles all filtering. We just sort the results.
         return [...bookings].sort((a, b) => (sortOrder === 'desc' ? b.id - a.id : a.id - b.id));
     }, [bookings, sortOrder]);
 
@@ -133,7 +159,7 @@ const Ledger = ({ user }) => {
             const updatedBooking = res.data.booking;
             setSelectedBooking(updatedBooking);
             handleCloseModal();
-            fetchBookings(currentPage); // Refresh data on the current page
+            fetchBookings(currentPage);
         } catch (saveError) {
             if (saveError.response && saveError.response.status === 409) {
                 setError(saveError.response.data.message);
@@ -157,13 +183,46 @@ const Ledger = ({ user }) => {
 
     return (
         <div className="ledger-container">
-            {/* <h2 style={{ color: 'red' }}>DEBUG: Version 2</h2> */}
             {user && (user.role === 'admin' || user.role === 'desk') && showAnalytics && (
                 <DeskAnalytics date={filters.date} />
             )}
+
+            {/* --- SUMMARY CARDS SECTION --- */}
+            <div className="stats-grid">
+                <div className="stat-card">
+                    <h3>Total Bookings</h3>
+                    <div className="stat-value">{bookings.length}</div>
+                </div>
+                <div className="stat-card">
+                    <h3>Total Revenue</h3>
+                    <div className="stat-value">₹{stats.totalRevenue.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                </div>
+                <div className="stat-card">
+                    <h3>Pending Amount</h3>
+                    <div className="stat-value">₹{stats.totalPending.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
+                </div>
+                <div className="stat-card">
+                    <h3>Revenue by Mode</h3>
+                    <div className="mode-list">
+                        {Object.entries(stats.modes).length > 0 ? (
+                            Object.entries(stats.modes).map(([mode, value]) => (
+                                <div className="mode-item" key={mode} style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '4px' }}>
+                                    <span style={{ fontWeight: '500' }}>{mode}:</span> 
+                                    <span>₹{value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="mode-item" style={{ color: '#888', fontStyle: 'italic' }}>No revenue recorded</div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             <header className="page-header">
                 <h1>Bookings History</h1>
             </header>
+
+            {/* ... rest of the code for filters and table remains the same ... */}
             <div className="controls-bar">
                 <div className="button-group">
                     {user && (user.role === 'admin' || user.role === 'desk') && (
@@ -223,11 +282,13 @@ const Ledger = ({ user }) => {
                     />
                 </div>
             </div>
+
             <div className="tabs-container">
                 <button className={`tab-button ${activeTab === 'active' ? 'active' : ''}`} onClick={() => setActiveTab('active')}>Active Bookings</button>
                 <button className={`tab-button ${activeTab === 'closed' ? 'active' : ''}`} onClick={() => setActiveTab('closed')}>Closed Bookings</button>
                 <button className={`tab-button ${activeTab === 'cancelled' ? 'active' : ''}`} onClick={() => setActiveTab('cancelled')}>Cancelled Bookings</button>
             </div>
+
             <div className="table-wrapper">
                 <BookingList
                     bookings={filteredAndSortedBookings}
@@ -252,4 +313,3 @@ const Ledger = ({ user }) => {
 };
 
 export default Ledger;
-
