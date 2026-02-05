@@ -55,25 +55,21 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
                         endTime,
                         slots_booked: slotsBooked
                     });
-                    let baseCourtPrice = res.data.total_price || 0; // This is the base court price from backend
+                    let baseCourtPrice = res.data.total_price || 0; 
 
-                    // Calculate total price from selected accessories
                     const accessoriesTotal = selectedAccessories.reduce((total, acc) => {
                         const accessoryDetails = accessories.find(a => a.id === acc.id);
                         return total + ((accessoryDetails?.price || 0) * acc.quantity);
                     }, 0);
                     
-                    // totalPrice to display (undiscounted court + accessories)
                     const undiscountedTotalPrice = baseCourtPrice + accessoriesTotal;
                     setTotalPrice(undiscountedTotalPrice); 
 
                     const currentDiscount = parseFloat(discountAmount) || 0;
-                    // Effective total for balance calculation (discounted court + accessories)
                     const effectiveTotalForBalance = (baseCourtPrice - currentDiscount) + accessoriesTotal;
 
-                    // Recalculate balance whenever price, discount, or amount paid changes
                     const currentAmountPaid = parseFloat(amountPaid) || 0;
-                    setBalance(effectiveTotalForBalance - currentAmountPaid); // Balance uses the effective total
+                    setBalance(effectiveTotalForBalance - currentAmountPaid); 
 
                 } catch (error) {
                     console.error("Error calculating price:", error);
@@ -106,6 +102,14 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
 
     // --- Handlers ---
     const handleAmountChange = (setter) => (e) => setter(e.target.value);
+
+    // ✅ New Phone Number Restriction Handler
+    const handleContactChange = (e) => {
+        const value = e.target.value.replace(/\D/g, ''); // Remove non-numeric characters
+        if (value.length <= 10) {
+            setCustomerContact(value);
+        }
+    };
 
     const handleAddSelectedAccessory = (accessoryId) => {
         if (!accessoryId) return;
@@ -263,15 +267,16 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
                 {selectedCourtDetails?.capacity > 1 && (
                     <div className="form-group">
                         <label>Number of People (Slots)</label>
-                                                    <input
-                                                        type="number"
-                                                        value={slotsBooked}
-                                                        onChange={(e) => setSlotsBooked(e.target.value)}
-                                                        onWheel={(e) => e.currentTarget.blur()} // Blur to prevent scroll increment/decrement
-                                                        min="1"
-                                                        placeholder="Enter number of people"
-                                                        required
-                                                    />                        {selectedCourtDetails.available_slots !== undefined && slotsBooked > selectedCourtDetails.available_slots && (
+                        <input
+                            type="number"
+                            value={slotsBooked}
+                            onChange={(e) => setSlotsBooked(e.target.value)}
+                            onWheel={(e) => e.currentTarget.blur()} 
+                            min="1"
+                            placeholder="Enter number of people"
+                            required
+                        />
+                        {selectedCourtDetails.available_slots !== undefined && slotsBooked > selectedCourtDetails.available_slots && (
                              <p style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>Exceeds capacity ({selectedCourtDetails.available_slots} available)</p>
                         )}
                         {errors.slotsBooked && <p style={{ color: 'red', fontSize: '12px' }}>{errors.slotsBooked}</p>}
@@ -286,7 +291,15 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
 
                 <div className="form-group">
                     <label>Customer Contact</label>
-                    <input type="text" value={customerContact} onChange={handleAmountChange(setCustomerContact)} required />
+                    {/* ✅ Updated Input with restriction */}
+                    <input 
+                        type="text" 
+                        value={customerContact} 
+                        onChange={handleContactChange} 
+                        maxLength="10" 
+                        placeholder="10-digit mobile number"
+                        required 
+                    />
                     {errors.customerContact && <p style={{ color: 'red', fontSize: '12px' }}>{errors.customerContact}</p>}
                 </div>
 
@@ -300,7 +313,7 @@ const BookingForm = ({ courts, selectedDate, startTime, endTime, onBookingSucces
                     <div className="form-group">
                         <button
                             type="button"
-                            className="btn-add-discount" // Reusing the class for consistent styling
+                            className="btn-add-discount" 
                             onClick={() => setShowAccessories(true)}
                         >
                             + Add Accessories
