@@ -189,4 +189,22 @@
         background-color: rgba(255, 255, 255, 0.1) !important;
         color: inherit; 
     }
+    /* Target the specific card content for Revenue by Mode */
+.stats-grid > div:last-child { 
+    padding: 12px; /* Ensures consistent inner spacing */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Ensure the row items (Cash, Cheque, UPI) span the full width */
+.stats-grid .revenue-item, 
+.stats-grid div > div[style*="flex"] { 
+    width: 100%;
+    margin-left: 0; 
+    margin-right: 0;
+    display: flex;
+    justify-content: space-between; /* Keeps labels left and values right */
+    padding: 2px 4px;
+}
 }
