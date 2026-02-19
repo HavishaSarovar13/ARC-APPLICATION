@@ -1878,141 +1878,285 @@ router.get('/ledger/download', authenticateToken, async (req, res) => {
 
 // --- Overall Analytics ---
 
+
+
 // Analytics: Overall Summary
+
 router.get('/analytics/overall/summary', authenticateToken, isAdmin, async (req, res) => {
+
     try {
+
         const { startDate, endDate } = req.query;
+
         let paymentDateFilter = '';
+
         let bookingDateFilter = '';
+
         let queryParams = [];
 
+
+
         if (startDate && endDate) {
+
             paymentDateFilter = ' AND payment_date BETWEEN ? AND ?';
+
             bookingDateFilter = ' AND date BETWEEN ? AND ?';
+
             queryParams.push(startDate, endDate);
+
         }
+
+
 
         // 1. Total Revenue (All payments)
-        const [[{ total_revenue }]] = await db.query(`SELECT SUM(amount) as total_revenue FROM payments WHERE 1=1 ${paymentDateFilter}`, queryParams);
+
+       // This combines money from BOTH your payments and memberships tables
+const [[{ total_revenue }]] = await db.query(`
+    SELECT (
+        (SELECT COALESCE(SUM(amount), 0) FROM payments WHERE DATE(payment_date) BETWEEN ? AND ?) +
+        (SELECT COALESCE(SUM(amount_paid), 0) FROM active_memberships WHERE DATE(created_at) BETWEEN ? AND ?)
+    ) as total_revenue`, 
+    [startDate, endDate, startDate, endDate]
+);
+
+
 
         // 2. Total Discount (Currently only tracked explicitly in bookings)
+
         const [[{ total_discount }]] = await db.query(`SELECT SUM(discount_amount) as total_discount FROM bookings WHERE status != 'Cancelled' ${bookingDateFilter}`, queryParams);
 
+
+
         res.json({
+
             total_revenue: parseFloat(total_revenue) || 0,
+
             total_discount: parseFloat(total_discount) || 0
+
         });
+
     } catch (err) {
+
         res.status(500).json({ error: err.message });
+
     }
+
 });
 
+
+
 // Analytics: Overall Revenue by Sport
+
 router.get('/analytics/overall/revenue-by-sport', authenticateToken, isAdmin, async (req, res) => {
+
     try {
+
         const { startDate, endDate } = req.query;
+
         let dateFilter = '';
+
         let queryParams = [];
 
+
+
         if (startDate && endDate) {
+
             dateFilter = ' AND p.payment_date BETWEEN ? AND ?';
+
             queryParams.push(startDate, endDate);
+
         }
 
+
+
         // Combine revenue from Bookings and Memberships linked to sports
+
         const query = `
+
             SELECT sport_name, SUM(revenue) as revenue FROM (
+
                 -- Booking Revenue
+
                 SELECT s.name as sport_name, SUM(p.amount) as revenue
+
                 FROM payments p
+
                 JOIN bookings b ON p.booking_id = b.id
+
                 JOIN sports s ON b.sport_id = s.id
+
                 WHERE p.booking_id IS NOT NULL
+
                 ${dateFilter}
+
                 GROUP BY s.name
+
+
 
                 UNION ALL
 
+
+
                 -- Membership Revenue
+
                 SELECT s.name as sport_name, SUM(p.amount) as revenue
+
                 FROM payments p
+
                 JOIN active_memberships am ON p.membership_id = am.id
+
                 JOIN membership_packages mp ON am.package_id = mp.id
+
                 JOIN sports s ON mp.sport_id = s.id
+
                 WHERE p.membership_id IS NOT NULL
+
                 ${dateFilter}
+
                 GROUP BY s.name
+
             ) as combined
+
             GROUP BY sport_name
+
             ORDER BY revenue DESC
+
         `;
 
+
+
         // We need to pass parameters twice because of the UNION
+
         const fullParams = [...queryParams, ...queryParams];
-        
+
+       
+
         const [rows] = await db.query(query, fullParams);
+
         res.json(rows);
+
     } catch (err) {
+
         res.status(500).json({ error: err.message });
+
     }
+
 });
+
+
 
 // Analytics: Overall Revenue by Payment Mode
+
 router.get('/analytics/overall/revenue-by-payment-mode', authenticateToken, isAdmin, async (req, res) => {
+
     try {
+
         const { startDate, endDate } = req.query;
+
         let dateFilter = '';
+
         let queryParams = [];
 
+
+
         if (startDate && endDate) {
+
             dateFilter = ' AND payment_date BETWEEN ? AND ?';
+
             queryParams.push(startDate, endDate);
+
         }
 
+
+
         const [rows] = await db.query(`
+
             SELECT payment_mode, SUM(amount) as revenue
+
             FROM payments
+
             WHERE 1=1
+
             ${dateFilter}
+
             GROUP BY payment_mode
+
             ORDER BY revenue DESC
+
         `, queryParams);
+
         res.json(rows);
+
     } catch (err) {
+
         res.status(500).json({ error: err.message });
+
     }
+
 });
 
+
+
 // Analytics: Revenue Distribution (Bookings vs Memberships)
+
 router.get('/analytics/overall/revenue-distribution', authenticateToken, isAdmin, async (req, res) => {
+
     try {
+
         const { startDate, endDate } = req.query;
+
         let dateFilter = '';
+
         let queryParams = [];
 
+
+
         if (startDate && endDate) {
+
             dateFilter = ' AND payment_date BETWEEN ? AND ?';
+
             queryParams.push(startDate, endDate);
+
         }
 
+
+
         const [rows] = await db.query(`
-            SELECT 
-                CASE 
+
+            SELECT
+
+                CASE
+
                     WHEN booking_id IS NOT NULL THEN 'Daily Bookings'
+
                     WHEN membership_id IS NOT NULL THEN 'Memberships'
+
                     ELSE 'Terminated Memberships (Unlinked)'
+
                 END as source,
+
                 SUM(amount) as revenue
+
             FROM payments
+
             WHERE 1=1
+
             ${dateFilter}
+
             GROUP BY source
+
             ORDER BY revenue DESC
+
         `, queryParams);
+
         res.json(rows);
+
     } catch (err) {
+
         res.status(500).json({ error: err.message });
+
     }
+
 });
 
 // Note: The WhatsApp route is not protected by JWT auth as it's for external users.
@@ -2119,19 +2263,37 @@ router.post('/whatsapp', async (req, res) => {
                 break;
 
             case 'enter_phone':
-                if (!/^\\d{10}$/.test(trimmedMessage)) {
-                    twiml.message('Invalid phone number. Please enter a 10-digit number.');
-                    break;
-                }
-                session.customer_contact = trimmedMessage;
-                const time_slot = `${formatTo12Hour(session.startTime)} - ${formatTo12Hour(session.endTime)}`;
-                const sql = 'INSERT INTO bookings (court_id, sport_id, customer_name, customer_contact, date, time_slot, payment_mode, amount_paid, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-                const values = [session.court_id, session.sport_id, session.customer_name, session.customer_contact, session.date, time_slot, 'online', session.amount, 'Booked'];
-                
-                try {
-                    const [result] = await db.query(sql, values);
-                    const bookingId = result.insertId;
+    if (!/^\d{10}$/.test(trimmedMessage)) {
+        twiml.message('Invalid phone number. Please enter a 10-digit number.');
+        break;
+    }
+    session.customer_contact = trimmedMessage;
+    const time_slot = `${formatTo12Hour(session.startTime)} - ${formatTo12Hour(session.endTime)}`;
 
+    // UPDATED SQL: Added total_amount to the list
+    const sql = `INSERT INTO bookings 
+        (court_id, sport_id, customer_name, customer_contact, date, time_slot, payment_mode, amount_paid, total_amount, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    // UPDATED VALUES: Added session.amount a second time for total_amount
+    const values = [
+        session.court_id, 
+        session.sport_id, 
+        session.customer_name, 
+        session.customer_contact, 
+        session.date, 
+        time_slot, 
+        'online', 
+        session.amount, // for amount_paid
+        session.amount, // for total_amount (This makes it dynamic!)
+        'Booked'
+    ];
+    
+    try {
+        const [result] = await db.query(sql, values);
+        const bookingId = result.insertId;
+
+        // ... (Keep the rest of your receipt and confirmation code exactly the same)
                     // Send confirmation message
                     const receipt = `
 *Booking Confirmed!*
